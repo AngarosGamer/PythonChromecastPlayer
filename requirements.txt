@@ -1,0 +1,12 @@
+###  Package and Library requirements  ###
+
+# Assumed already installed:
+# - os
+# - threading
+# - socket
+# - tkinter
+
+customtkinter == 5.1.2
+PyChromecast == 13.0.0
+yt-dlp == 2023.2.17
+spotify-dl == 8.5.0
