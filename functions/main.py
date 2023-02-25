@@ -3,6 +3,7 @@
 
 # Imports
 from os import kill, system
+import sys
 import chromecast_functions
 import download_manager
 import config
@@ -11,6 +12,11 @@ import customtkinter
 from threading import Thread
 import time
 import misc
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+
+colorama_init()
 
 def initialise_window():
     global pb, url_entry, total_length, current_length, c, pause_button
@@ -189,21 +195,38 @@ id = 0
 kill_threads = False
 
 # Start local storage server
-t = Thread(target=media_server) # New thread for visual aspects of the app 
-t.daemon = True 
-t.start()
-threads.append(t)
+print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Starting app thread")
+try:
+    t = Thread(target=media_server) # New thread for visual aspects of the app 
+    t.daemon = True 
+    t.start()
+    threads.append(t)
+except:
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while statring app thread. Quitting")
+    sys.exit()
 
-chromecast_functions.connect_chromecast() # Connect to the first chromecast of list. Not optimised, but good for single-chromecast households
+print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Connecting to chromecast player")
+try:
+    chromecast_functions.connect_chromecast() # Connect to the first chromecast of list. Not optimised, but good for single-chromecast households
+except:
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to Chromecast. Quitting")
+    sys.exit()
+
 c = config.config_setup() # the config class
 
 customtkinter.set_appearance_mode(c.getColor())
 
-root = customtkinter.CTk()
-root.title(c.getAppName())
-root.geometry(c.getWIN_X()+'x'+c.getWIN_Y())
-root.protocol("WM_DELETE_WINDOW", on_closing)
+print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Setting up visual window")
+try:
+    root = customtkinter.CTk()
+    root.title(c.getAppName())
+    root.geometry(c.getWIN_X()+'x'+c.getWIN_Y())
+    root.protocol("WM_DELETE_WINDOW", on_closing)
 
-initialise_window()
+    initialise_window()
+
+except:
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to start window. Quitting")
+    sys.exit()
 
 root.mainloop()

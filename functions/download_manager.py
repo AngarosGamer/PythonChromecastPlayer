@@ -3,10 +3,17 @@ import spotify_dl
 import os
 import misc
 import config
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+
+colorama_init()
 
 def download_ytvid_as_mp3(video_url):
+    c = config.config_setup()
+    print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Starting media download on {video_url}")
     video_info = yt_dlp.YoutubeDL().extract_info(url = video_url,download=False) # Extract the video info from parsed URL
-    filename = f"{clean_name(video_info['title'])}.wav" # type: ignore # Select the file name
+    filename = f"{clean_name(video_info['title'])}{c.getFileType()}" # type: ignore # Select the file name
     length = f"{video_info['duration']}" # type: ignore # Select video file duration
     options={
         'format':'bestaudio/best',
@@ -20,7 +27,11 @@ def download_ytvid_as_mp3(video_url):
     return filename, length # return the file name and the video length
     
 def delete_video(name):
-    os.remove('./media/'+name) # Remove a song in current directory
+    print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Removing video {name}")
+    try:
+        os.remove('./media/'+name) # Remove a song in current directory
+    except:
+        print(f"{Fore.YELLOW}Warning :{Style.RESET_ALL} Was not able to remove video {name}")
 
 def clean_name(name):
     name = str(name)

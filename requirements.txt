@@ -6,6 +6,7 @@
 # - socket
 # - tkinter
 
+colorama == 0.4.6
 customtkinter == 5.1.2
 PyChromecast == 13.0.0
 yt-dlp == 2023.2.17
