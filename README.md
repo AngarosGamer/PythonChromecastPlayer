@@ -8,6 +8,8 @@ Chromecast Player is a python-developped application acting as an interface for 
 
 ### From source
 
+Verified to work on Windows - other operating systems are unverified
+
 If you plan to install Chromecast Player directly from the source code, here's a reminder of the steps to take:
  - Download the code from GitHub
  - Using pip: `pip install -r requirements.txt` to install package and libraries
@@ -17,7 +19,7 @@ If running that last file doesn't work, `start_application.bat` might help
 
 ### From releases
 
-Simply run the `file.exe` program which will launch the app directly
+There are currently no releases for the project, please use it from source
 
 ## Configuration
 
