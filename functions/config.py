@@ -1,4 +1,5 @@
 import socket
+import os
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
@@ -22,7 +23,7 @@ class config_setup :
             self.APP_NAME = f.readline().split("=")[1][:-1].strip()
             self.WINDOW_X = f.readline().split("=")[1].strip()
             self.WINDOW_Y = f.readline().split("=")[1].strip()
-            self.COLOR = f.readline().split("=")[1][:-1].strip()
+            self.COLOR = f.readline().split("=")[1].strip()
             self.ACCENT = f.readline().split("=")[1].strip()
             self.FILE_TYPE = f.readline().split("=")[1].strip()
             hostname=socket.gethostname()   
@@ -37,10 +38,6 @@ class config_setup :
             self.ACCENT = "#eda850"
             self.FILE_TYPE = ".wav"
             self.LOCATION = "http://192.168.3.1:8000/media/"
-            
-        # Error checking the color input
-        if (self.COLOR != 'dark' or self.COLOR != 'light' or self.COLOR != 'system'):
-            self.COLOR = "system"
 
         print(f"[{Fore.GREEN}OK{Style.RESET_ALL}]: Using app name : {self.APP_NAME}")
         print(f"[{Fore.GREEN}OK{Style.RESET_ALL}]: Using window X : {self.WINDOW_X}")

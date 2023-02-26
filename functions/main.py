@@ -8,6 +8,7 @@ import chromecast_functions
 import download_manager
 import config
 import tkinter
+import trackQueue
 import customtkinter
 from threading import Thread
 import time
@@ -18,20 +19,24 @@ from colorama import Style
 
 colorama_init()
 
-def initialise_window():
-    global pb, url_entry, total_length, current_length, c, pause_button
-    c = config.config_setup()
+def initialise_window(c, queue):
+    global pb, url_entry, total_length, current_length, pause_button, queueFrame
+    player = customtkinter.CTkFrame(master=root, width=800)
+    player.grid(column=0, row=0, pady=12, padx=10)
 
-    url_label = customtkinter.CTkLabel(master=root, text="Enter Song URL: ")
+    queueFrame = customtkinter.CTkFrame(master=root, width=600)
+    queueFrame.grid(column=1, row=0, pady=12, padx=10)
+
+    url_label = customtkinter.CTkLabel(master=player, text="Enter Song URL: ")
     url_label.configure(wraplength=200, justify="center")
     url_label.grid(pady=12, padx=10)
 
-    url_entry = customtkinter.CTkEntry(master=root, width=int(c.getWIN_X())-20, placeholder_text="https://youtube.com/example")
+    url_entry = customtkinter.CTkEntry(master=player, width=780, placeholder_text="https://youtube.com/example")
     url_entry.configure()
     url_entry.bind('<Return>', lambda x: initiate_process(url_entry.get()))
     url_entry.grid(pady=12, padx=10)
 
-    playback = customtkinter.CTkFrame(master=root)
+    playback = customtkinter.CTkFrame(master=player)
     playback.grid(pady=12, padx=10)
 
     stop_button = customtkinter.CTkButton(playback, text = "Stop",command=stop_media,
@@ -59,10 +64,10 @@ def initialise_window():
     hover_color=c.getAccent(),
     bg_color='transparent',
     fg_color='transparent',
-    command = lambda : play_media(url_entry.get()))
+    command = lambda : play_media(url_entry.get(), queue))
     play_button.grid(row=0, column=2, pady=12, padx=10)
 
-    volume = customtkinter.CTkFrame(master=root)
+    volume = customtkinter.CTkFrame(master=player)
     volume.grid(pady=12, padx=10)
     
     volume_down_button = customtkinter.CTkButton(volume, text = "VDOWN",command=volume_down,
@@ -83,7 +88,7 @@ def initialise_window():
     fg_color='transparent')
     volume_up_button.grid(row=0, column=1, padx=10)
 
-    status = customtkinter.CTkFrame(master=root)
+    status = customtkinter.CTkFrame(master=player)
     status.grid(pady=12, padx=10)
 
     current_length=customtkinter.CTkLabel(status, text="00:00")
@@ -95,7 +100,7 @@ def initialise_window():
     total_length=customtkinter.CTkLabel(status, text="00:00")
     total_length.grid(row=0, column=2, pady=12, padx=5)
 
-    pb = customtkinter.CTkProgressBar(root, mode='determinate', progress_color=c.getAccent())
+    pb = customtkinter.CTkProgressBar(player, mode='determinate', progress_color=c.getAccent())
     pb.set(0)
     pb.grid(pady=12, padx=10)
 
@@ -105,7 +110,7 @@ def volume_up():
 def volume_down():
     chromecast_functions.volume_down()
 
-def play_media(entry):
+def play_media(entry, queue):
     initiate_process(entry)
 
 def pause_media():
@@ -120,13 +125,15 @@ def pause_media():
         chromecast_functions.pause()
 
 def stop_media():
-    global id, kill_threads
+    global id, kill_threads, queue, queueFrame
     id += 1
     kill_threads = True
-    if (len(songs) != 0):
-        for i in range(len(songs)):
-            download_manager.delete_video(songs[i])
-            songs.remove(songs[i])
+    if not queue.isEmpty():
+        for i in range(queue.getQueueLength()):
+            download_manager.delete_video(queue.getItems()[i].getTrackFilename())
+            queue.removeItemByIndex(i)
+        for widget in queueFrame.winfo_children():
+            widget.destroy()
     reset_visuals()
     chromecast_functions.stop()
 
@@ -157,29 +164,48 @@ def update_visuals(length, item_id):
 
 """Initiate a new listening session from url (entry parameter). Downloads a song, starts a thread for visual updates, and plays on chromecast station"""
 def initiate_process(entry):
-    global id, kill_threads, isPlaying
+    global id, kill_threads, queue, queueFrame
     id += 1
     kill_threads = True
-    if (len(songs) != 0):
-        for i in range(len(songs)):
-            download_manager.delete_video(songs[i])
-            songs.remove(songs[i])
+    if not queue.isEmpty():
+        for i in range(len(queue.getItems())):
+            download_manager.delete_video(queue.getItems()[i].getTrackFilename())
+            queue.removeItemByIndex(i)
+        for widget in queueFrame.winfo_children():
+            widget.destroy()
     if (not ("youtube.com" in entry)):
         return # The link is invalid, do nothing
     if (entry == ''): # On initialisation, tkinter will run through button functions with no / null arguments. Prevent issues by checking if null / empty
         return
-    filename, length = download_manager.download_ytvid_as_mp3(entry) # Retrieve the filename and video length, and download audio from given URL
-    songs.append(filename)
+    newQueueObject(entry, queueFrame)
+    filename, length = download_manager.download_ytvid_as_mp3(entry, queue) # Retrieve the filename and video length, and download audio from given URL
+    queue.createQueueItem(filename, entry)
     kill_threads = False
     t = Thread(target=update_visuals, args=(length,id,)) # New thread for visual aspects of the app 
     t.daemon = True 
     t.start()
     threads.append(t)
-    isPlaying = True
     chromecast_functions.play_new_song(filename) # Play song on chromecast
+
+def newQueueObject(url, queueFrame):
+    global c
+    itemFrame = customtkinter.CTkFrame(master=queueFrame, width=(600-20))
+    itemFrame.grid(pady=12, padx=10)
+    queueItem = customtkinter.CTkLabel(master=itemFrame, text=url)
+    queueItem.configure(justify="left")
+    queueItem.grid(row=0, column=0, pady=12, padx=10)
+    button = customtkinter.CTkButton(master=itemFrame, text="Current Song",
+        border_width=2,
+        corner_radius=20,
+        border_color= c.getAccent(),
+        hover_color=c.getAccent(),
+        bg_color='transparent',
+        fg_color='transparent')
+    button.grid(row=0, column=1, pady=12, padx=10)
 
 def on_closing():
     stop_media()
+    print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Visual closing down")
     root.destroy()
 
 def media_server():
@@ -189,7 +215,6 @@ def media_server():
 global c
 global paused
 threads = [] # threads
-songs = [] # songs
 paused = False
 id = 0
 kill_threads = False
@@ -214,7 +239,10 @@ except:
 
 c = config.config_setup() # the config class
 
-customtkinter.set_appearance_mode(c.getColor())
+try:
+    customtkinter.set_appearance_mode(c.getColor())
+except:
+    customtkinter.set_appearance_mode('system')
 
 print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Setting up visual window")
 try:
@@ -222,8 +250,8 @@ try:
     root.title(c.getAppName())
     root.geometry(c.getWIN_X()+'x'+c.getWIN_Y())
     root.protocol("WM_DELETE_WINDOW", on_closing)
-
-    initialise_window()
+    queue = trackQueue.queue({})
+    initialise_window(c, queue)
 
 except:
     print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to start window. Quitting")
