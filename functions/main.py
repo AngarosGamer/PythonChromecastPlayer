@@ -177,9 +177,9 @@ def initiate_process(entry):
         return # The link is invalid, do nothing
     if (entry == ''): # On initialisation, tkinter will run through button functions with no / null arguments. Prevent issues by checking if null / empty
         return
-    newQueueObject(entry, queueFrame)
-    filename, length = download_manager.download_ytvid_as_mp3(entry, queue) # Retrieve the filename and video length, and download audio from given URL
+    filename, length, video_title = download_manager.download_ytvid_as_mp3(entry, queue) # Retrieve the filename and video length, and download audio from given URL
     queue.createQueueItem(filename, entry)
+    newQueueObject(video_title, queueFrame)
     kill_threads = False
     t = Thread(target=update_visuals, args=(length,id,)) # New thread for visual aspects of the app 
     t.daemon = True 
@@ -227,14 +227,14 @@ try:
     t.start()
     threads.append(t)
 except:
-    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while statring app thread. Quitting")
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while statring app thread. Quit")
     sys.exit()
 
 print(f"{Fore.BLUE}Info :{Style.RESET_ALL} Connecting to chromecast player")
 try:
     chromecast_functions.connect_chromecast() # Connect to the first chromecast of list. Not optimised, but good for single-chromecast households
 except:
-    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to Chromecast. Quitting")
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to Chromecast. Quit")
     sys.exit()
 
 c = config.config_setup() # the config class
@@ -254,7 +254,7 @@ try:
     initialise_window(c, queue)
 
 except:
-    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to start window. Quitting")
+    print(f"{Fore.RED}Error :{Style.RESET_ALL} Error while connecting to start window. Quit")
     sys.exit()
 
 root.mainloop()

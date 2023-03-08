@@ -52,3 +52,6 @@ Main Menu after booting to the app
 While using the application
 <img src="https://i.imgur.com/59Wfth2.png">
 
+Latest Version with Current song showing
+<img src="https://imgur.com/BVXl6Ui">
+
